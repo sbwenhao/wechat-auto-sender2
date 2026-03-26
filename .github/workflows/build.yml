@@ -21,11 +21,28 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Check project structure
+      run: |
+        echo "=== Project Structure ==="
+        ls -la
+        echo "=== App Module ==="
+        ls -la app/
+        echo "=== Source Files ==="
+        find app/src/main -type f | head -20
+
     - name: Make gradlew executable
       run: chmod +x gradlew
 
     - name: Build APK
-      run: ./gradlew assembleRelease --no-daemon
+      run: |
+        echo "Starting Gradle build..."
+        ./gradlew assembleRelease --no-daemon -v 2>&1
+        BUILD_STATUS=$?
+        echo "Build exit code: $BUILD_STATUS"
+        echo "=== Checking build outputs ==="
+        find app/build -name "*.apk" 2>/dev/null || echo "No APK files found"
+        ls -la app/build/outputs/apk/ 2>/dev/null || echo "APK output directory does not exist"
+        exit $BUILD_STATUS
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
@@ -34,7 +51,7 @@ jobs:
         path: app/build/outputs/apk/release/
 
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/' )
       uses: softprops/action-gh-release@v1
       with:
         files: app/build/outputs/apk/release/*.apk
