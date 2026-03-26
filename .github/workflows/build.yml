@@ -20,60 +20,15 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
 
-    - name: Debug - Check environment
-      run: |
-        set -x
-        echo "=== Java Version ==="
-        java -version
-        echo "=== Gradle Version ==="
-        ./gradlew --version || echo "Gradle not found"
-        echo "=== Current Directory ==="
-        pwd
-        echo "=== Directory Contents ==="
-        ls -la
-        echo "=== App Directory ==="
-        ls -la app/ || echo "App directory not found"
-
     - name: Make gradlew executable
       run: chmod +x gradlew
 
-    - name: Build APK - Verbose
-      run: |
-        set -x
-        echo "Starting Gradle build..."
-        ./gradlew assembleRelease --no-daemon --info 2>&1 | tee gradle-build.log
-        BUILD_STATUS=$?
-        echo "Build exit code: $BUILD_STATUS"
-        
-        echo "=== Checking for APK files ==="
-        find . -name "*.apk" -type f 2>/dev/null | head -20 || echo "No APK files found"
-        
-        echo "=== Build outputs directory ==="
-        ls -la app/build/outputs/ 2>/dev/null || echo "app/build/outputs does not exist"
-        
-        echo "=== Full app/build directory ==="
-        find app/build -type d 2>/dev/null | head -20 || echo "app/build does not exist"
-        
-        exit $BUILD_STATUS
-
-    - name: Upload build log
-      if: always( )
-      uses: actions/upload-artifact@v4
-      with:
-        name: gradle-build-log
-        path: gradle-build.log
+    - name: Build with Gradle
+      run: ./gradlew assembleRelease
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
+      if: success( )
       with:
         name: app-release
-        path: app/build/outputs/apk/release/
-      continue-on-error: true
-
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: app/build/outputs/apk/release/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: app/build/outputs/apk/release/app-release.apk
