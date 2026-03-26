@@ -20,11 +20,26 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
 
+    - name: Debug - List files
+      run: |
+        echo "=== Project root ==="
+        ls -la
+        echo "=== app directory ==="
+        ls -la app/
+        echo "=== app/src/main ==="
+        ls -la app/src/main/
+        echo "=== gradlew file ==="
+        ls -la gradlew
+        file gradlew
+
     - name: Make gradlew executable
       run: chmod +x gradlew
 
+    - name: Debug - Run Gradle help
+      run: ./gradlew help
+
     - name: Build with Gradle
-      run: ./gradlew assembleRelease --stacktrace
+      run: ./gradlew assembleRelease -v
 
     - name: Check build outputs
       if: always( )
